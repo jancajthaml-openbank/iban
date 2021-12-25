@@ -1,0 +1,50 @@
+#!/bin/bash
+
+set -eu
+trap exit INT TERM
+
+################################################################################
+
+SOURCE=""
+while [ $# -gt 0 ] ; do
+key="$1"
+case $key in
+  --source)  SOURCE="$2";  shift; shift; ;;
+  *)                       shift;        ;;
+esac
+done
+
+################################################################################
+
+if [ -z "${SOURCE}" ] ; then
+  (>&2 echo "[error] source package not provided")
+  exit 1
+fi
+
+################################################################################
+
+lifecycle::go::lint() {
+  local dir="$1"
+  if [ -z ${dir} -o ! -d ${dir} ] ; then
+    return
+  fi
+  find $dir \
+    -name "*.go" \
+    -not \
+    -path "*vendor/*" \
+  \
+  | sort -u \
+  | while read file ; do
+    (gofmt -s -w ${file} || :)
+    (/go/bin/golint -min_confidence 0.5 ${file} || :)
+    (/go/bin/misspell -q -locale US -source=text -w ${file} || :)
+    (/go/bin/prealloc ${file} || :)
+    (/go/bin/goconst ${file} || :)
+    (/go/bin/ineffassign ${file} || :)
+  done
+}
+
+################################################################################
+
+lifecycle::go::lint \
+  ${SOURCE}

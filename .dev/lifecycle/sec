@@ -1,0 +1,37 @@
+#!/bin/bash
+
+set -eu
+trap exit INT TERM
+
+################################################################################
+
+SOURCE=""
+while [ $# -gt 0 ] ; do
+key="$1"
+case $key in
+  --source)  SOURCE="$2";  shift; shift; ;;
+  *)                       shift;        ;;
+esac
+done
+
+################################################################################
+
+if [ -z "${SOURCE}" ] ; then
+  (>&2 echo "[error] source package not provided")
+  exit 1
+fi
+
+################################################################################
+
+lifecycle::go::sec() {
+  local dir="$1"
+  if [ -z ${dir} -o ! -d ${dir} ] ; then
+    return
+  fi
+  cd ${dir} && gosec -exclude=G104,G302 ./...
+}
+
+################################################################################
+
+lifecycle::go::sec \
+  ${SOURCE}

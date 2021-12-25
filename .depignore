@@ -1,0 +1,9 @@
+.git
+.dev
+.gitignore
+.editorconfig
+.env
+.depignore
+reports
+vendor
+*_test.*
